@@ -1,7 +1,14 @@
 using FCG.Users.Application.Auth.Ports;
+using FCG.Users.Application.Auth.UseCases.Queries.LoginUserQuery;
 using FCG.Users.Application.Common.Ports;
+using FCG.Users.Application.Users.Ports;
+using FCG.Users.Application.Users.UseCases.Commands.AddUser;
+using FCG.Users.Application.Users.UseCases.Commands.DeactivateUser;
+using FCG.Users.Application.Users.UseCases.Queries.GetUserById;
+using FCG.Users.Application.Users.UseCases.Queries.GetUsersPaged;
 using FCG.Users.Infrastructure.Adapters.Auth.Jwt;
 using FCG.Users.Infrastructure.Adapters.Common;
+using FCG.Users.Infrastructure.Adapters.Users.Repositories;
 using FCG.Users.Infrastructure.Persistence;
 using FCG.Users.Infrastructure.Persistence.Interceptors;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -23,10 +30,17 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext, UserContext>();
+builder.Services.AddScoped<IAddOrUpdateUserCommandHandler, AddOrUpdateUserCommandHandler>();
+builder.Services.AddScoped<IUserCommandRepository, UserCommandRepository>();
+builder.Services.AddScoped<IUserQueryRepository, UserQueryRepository>();
+builder.Services.AddScoped<IGetUserByIdQueryHandler, GetUserByIdQueryHandler>();
+builder.Services.AddScoped<IGetUsersPagedQueryHandler, GetUsersPagedQueryHandler>();
+builder.Services.AddScoped<IDeactivateUserCommandHandler, DeactivateUserCommandHandler>();
+builder.Services.AddScoped<ILoginUserQueryHandler, LoginUserQueryHandler>();
+builder.Services.AddScoped<IHashHelper, HashHelper>();
+builder.Services.AddScoped<ITokenService, JwtTokenService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddScoped<ITokenService, JwtTokenService>();
-
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
