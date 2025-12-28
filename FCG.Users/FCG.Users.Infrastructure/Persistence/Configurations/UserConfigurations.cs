@@ -1,4 +1,4 @@
-﻿using FCG.Users.Domain.Users.Entities;
+using FCG.Users.Domain.Users.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -74,21 +74,6 @@ namespace FCG.Users.Infrastructure.Persistence.Configurations
                 .IsRequired()
                 .HasConversion<string>()
                 .HasMaxLength(20);
-
-            builder.Property(u => u.GamePurchaseId)
-                .IsRequired();
-
-            builder.Property(u => u.PromotionId)
-                .IsRequired();
-
-            //builder.HasMany(u => u.GamePurchaseId)
-            //    .WithOne()
-            //    .HasForeignKey(gp => gp.UserId)
-            //    .OnDelete(DeleteBehavior.Restrict);
-
-            //builder.HasMany(u => u.PromotionId)
-            //    .WithMany(p => p.Users)
-            //    .UsingEntity(j => j.ToTable("UserPromotion"));
         }
     }
 }

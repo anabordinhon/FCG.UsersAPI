@@ -1,4 +1,4 @@
-﻿using FCG.Users.Domain.Common.Entities;
+using FCG.Users.Domain.Common.Entities;
 using FCG.Users.Domain.Common.Enuns;
 using FCG.Users.Domain.Users.ValueObjects;
 
@@ -16,10 +16,6 @@ namespace FCG.Users.Domain.Users.Entities
             Role = role;
         }
         private User() { }
-        //public ICollection<GamePurchase> GamePurchases { get; set; } = [];
-        //public ICollection<Promotion> Promotions { get; set; } = [];
-        public int GamePurchaseId { get; set; }
-        public int PromotionId { get; set; }
         public Guid PublicId { get; private set; } = Guid.NewGuid();
         public FullName FullName { get; private set; } = default!;
         public EmailAddress Email { get; private set; } = default!;

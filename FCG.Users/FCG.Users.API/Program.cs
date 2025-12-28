@@ -1,11 +1,13 @@
+using FCG.Users.Application.Auth.Ports;
 using FCG.Users.Application.Common.Ports;
+using FCG.Users.Infrastructure.Adapters.Auth.Jwt;
 using FCG.Users.Infrastructure.Adapters.Common;
 using FCG.Users.Infrastructure.Persistence;
 using FCG.Users.Infrastructure.Persistence.Interceptors;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +25,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext, UserContext>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddScoped<ITokenService, JwtTokenService>();
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -58,7 +61,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var jwtSecretKey = builder.Configuration["Jwt:SecretKey"]
-    ?? throw new InvalidOperationException("JWT SecretKey não configurada (verifique appsettings / User Secrets)");
+    ?? throw new InvalidOperationException("JWT SecretKey nÃ£o configurada (verifique appsettings / User Secrets)");
 
 var key = Encoding.ASCII.GetBytes(jwtSecretKey);
 
@@ -69,7 +72,7 @@ builder.Services.AddAuthentication(x =>
 })
 .AddJwtBearer(x =>
 {
-    x.RequireHttpsMetadata = false; // Em produção true
+    x.RequireHttpsMetadata = false; // Em produÃ§Ã£o true
     x.SaveToken = true;
     x.TokenValidationParameters = new TokenValidationParameters
     {
@@ -90,6 +93,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthorization();
 
 app.UseAuthorization();
 

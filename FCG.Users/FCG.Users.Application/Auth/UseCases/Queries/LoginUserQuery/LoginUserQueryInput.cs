@@ -1,0 +1,12 @@
+using FCG.Users.Domain.Users.ValueObjects;
+
+namespace FCG.Users.Application.Auth.UseCases.Queries.LoginUserQuery;
+public class LoginUserQueryInput
+{
+    public required string Email { get; set; } = default!;
+    public required string Password { get; set; } = default!;
+    public LoginUserQuery MapToQuery()
+    {
+        return new LoginUserQuery(EmailAddress.Create(Email), RawPassword.Create(Password));
+    }
+}

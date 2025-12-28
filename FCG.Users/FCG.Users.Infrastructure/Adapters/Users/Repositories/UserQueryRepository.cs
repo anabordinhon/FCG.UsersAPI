@@ -1,4 +1,4 @@
-﻿using FCG.Users.Application.Common;
+using FCG.Users.Application.Common;
 using FCG.Users.Application.Users.Ports;
 using FCG.Users.Domain.Users.Entities;
 using FCG.Users.Domain.Users.ValueObjects;
@@ -41,13 +41,13 @@ namespace FCG.Users.Infrastructure.Adapters.Users.Repositories
                 TotalCount = totalCount
             };
         }
-        public async Task<User> GetByIdWithPromotionsAsync(int userId, CancellationToken cancellationToken)
-        {
-            return await _dbContext.Users
-                .AsNoTracking()
-                .Include(u => u.PromotionId)
-                .FirstAsync(u => u.Id == userId, cancellationToken);
-        }
+        //public async Task<User> GetByIdWithPromotionsAsync(int userId, CancellationToken cancellationToken)
+        //{
+        //    return await _dbContext.Users
+        //        .AsNoTracking()
+        //        .Include(u => u.PromotionId)
+        //        .FirstAsync(u => u.Id == userId, cancellationToken);
+        //}
 
         public async Task<User?> GetByEmailAsync(EmailAddress email, CancellationToken cancellationToken)
         {
