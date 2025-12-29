@@ -40,14 +40,14 @@ public class LoginUserQueryHandler : ILoginUserQueryHandler
                 .Error("Usuário ou senha inválidos");
 
         var token = _tokenService.GenerateToken(
-            user.Id,
+            user.PublicId,
             user.Role.ToString());
 
         return ResultData<LoginUserQueryOutput>.Success(
             new LoginUserQueryOutput
             {
                 Token = token,
-                UserId = user.Id,
+                PublicId = user.PublicId,
                 Role = user.Role.ToString()
             });
     }

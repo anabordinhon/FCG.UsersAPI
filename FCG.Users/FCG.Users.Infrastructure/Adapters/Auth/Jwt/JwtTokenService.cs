@@ -15,14 +15,14 @@ public class JwtTokenService : ITokenService
         _configuration = configuration;
     }
 
-    public string GenerateToken(int userId, string role)
+    public string GenerateToken(Guid userPublicId, string role)
     {
         var key = Encoding.ASCII.GetBytes(
             _configuration["Jwt:SecretKey"]!);
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, userPublicId.ToString()),
             new Claim(ClaimTypes.Role, role)
         };
 

@@ -7,5 +7,5 @@ using System.Threading.Tasks;
 namespace FCG.Users.Application.Auth.Ports;
 public interface ITokenService
 {
-    string GenerateToken(int userId, string role);
+    string GenerateToken(Guid userPublicId, string role);
 }
