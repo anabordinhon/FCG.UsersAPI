@@ -11,6 +11,7 @@ using FCG.Users.Infrastructure.Adapters.Common;
 using FCG.Users.Infrastructure.Adapters.Users.Repositories;
 using FCG.Users.Infrastructure.Persistence;
 using FCG.Users.Infrastructure.Persistence.Interceptors;
+using FCG.Users.Infrastructure.Messaging.Bus;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -97,6 +98,7 @@ builder.Services.AddAuthentication(x =>
     };
 });
 
+builder.Services.AddMassTransitConfiguration();
 
 var app = builder.Build();
 

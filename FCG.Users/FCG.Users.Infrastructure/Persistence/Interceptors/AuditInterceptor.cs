@@ -1,4 +1,4 @@
-﻿using FCG.Users.Application.Common.Ports;
+using FCG.Users.Application.Common.Ports;
 using FCG.Users.Domain.Common.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
