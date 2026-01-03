@@ -1,0 +1,17 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  users-api:
+    container_name: users-api
+    build:
+      context: .
+      dockerfile: FCG.Users.API/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - rabbitmq
