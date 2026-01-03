@@ -1,4 +1,17 @@
 services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    environment:
+      SA_PASSWORD: "123Aa321"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "123Aa321" -Q "SELECT 1"
+      interval: 10s
+      retries: 10
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -7,11 +20,14 @@ services:
       - "15672:15672"
 
   users-api:
-    container_name: users-api
     build:
       context: .
       dockerfile: FCG.Users.API/Dockerfile
+    container_name: users-api
     ports:
       - "8080:8080"
     depends_on:
+      - sqlserver
       - rabbitmq
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=FiapCloudGames;User Id=sa;Password=123Aa321;TrustServerCertificate=True;Encrypt=False"

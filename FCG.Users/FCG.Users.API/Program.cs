@@ -98,9 +98,16 @@ builder.Services.AddAuthentication(x =>
     };
 });
 
+
+
+
 builder.Services.AddMassTransitConfiguration();
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
+
+
+app.MapHealthChecks("/health");
 
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -110,6 +117,29 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.UseAuthorization();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    var retryCount = 0;
+    var maxRetries = 10;
+    while (retryCount < maxRetries)
+    {
+        try
+        {
+            db.Database.Migrate();
+            Console.WriteLine("Migrations aplicadas com sucesso!");
+            break;
+        }
+        catch (Exception ex)
+        {
+            retryCount++;
+            Console.WriteLine($"Erro ao aplicar migrations (tentativa {retryCount}/{maxRetries}): {ex.Message}");
+            Thread.Sleep(5000);
+        }
+    }
+}
 
 app.MapControllers();
 
