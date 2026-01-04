@@ -13,7 +13,7 @@ Este projeto implementa o cadastro de usuários e atua como **Producer**, public
 
 ## 🏗️ Arquitetura e Padrões
 
-O projeto segue os princípios da **Clean Architecture** e **CQRS** (sem MediatR), garantindo separação de responsabilidades e testabilidade.
+O projeto segue os princípios da **Clean Architecture** e **CQRS** , garantindo separação de responsabilidades e testabilidade.
 
 * **API:** Entry point da aplicação (Controllers).
 * **Application:** Casos de uso, Handlers, Mappers e Eventos.
