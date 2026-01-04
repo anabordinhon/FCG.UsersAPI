@@ -29,42 +29,57 @@ namespace FCG.Users.Application.Users.UseCases.Commands.AddUser
         }
         public async Task<ResultData<UserOutput>> Handle(AddOrUpdateUserCommand command, CancellationToken cancellationToken)
         {
-            var isUpdate = command.PublicId is not null
-            && await _userCommandRepository.UserExistsAsync(command.PublicId, cancellationToken);
+            var correlationId = Guid.NewGuid();
 
-            var passwordHash = _hashHelper.GenerateHash(command.Password);
-            var user = User.Create(command.Name, command.Email, command.NickName, passwordHash.Hash, passwordHash.Salt, command.Role);
-
-            if (isUpdate)
+            try
             {
-                await _userCommandRepository.Update(user, cancellationToken);
-            }
-            else
-            {
-                await _userCommandRepository.AddAsync(user, cancellationToken);
+                var isUpdate = command.PublicId is not null
+                && await _userCommandRepository.UserExistsAsync(command.PublicId, cancellationToken);
 
-                var userCreatedEvent = new UserCreatedEvent
+                var passwordHash = _hashHelper.GenerateHash(command.Password);
+
+                var user = User.Create(command.Name, command.Email, command.NickName, passwordHash.Hash, passwordHash.Salt, command.Role);
+
+                if (isUpdate)
                 {
-                    UserId = user.PublicId,
-                    Email = user.Email.Email,
-                    Name = user.FullName.Name,
-                    NickName = user.NickName.Nick,
-                    Role = user.Role.ToString(),
-                    CreatedAt = DateTime.UtcNow
-                };
+                    await _userCommandRepository.Update(user, cancellationToken);
+                }
+                else
+                {
+                    await _userCommandRepository.AddAsync(user, cancellationToken);
 
-                await _publishEndpoint.Publish(userCreatedEvent);
+                    _logger.LogInformation(
+                        "Cadastro persistido no banco. UserId: {UserId}, CorrelationId: {CorrelationId}",
+                        user.PublicId,
+                        correlationId);
 
-                _logger.LogInformation(
-                    "UserCreatedEvent publicado - PublicId: {UserId}, Email: {Email}",
-                    user.PublicId,
-                    user.Email.Email);
+                    var userCreatedEvent = new UserCreatedEvent
+                    {
+                        UserId = user.PublicId,
+                        Email = user.Email.Email,
+                        Name = user.FullName.Name,
+                        NickName = user.NickName.Nick,
+                        Role = user.Role.ToString(),
+                        CreatedAt = DateTime.UtcNow,
+                        CorrelationId = correlationId
+                    };
+
+                    await _publishEndpoint.Publish(userCreatedEvent, cancellationToken);
+
+                    _logger.LogInformation(
+                        "UserCreatedEvent publicado. EventId: {EventId}, CorrelationId: {CorrelationId}, Destino: RabbitMQ",
+                        userCreatedEvent.EventId,
+                        userCreatedEvent.CorrelationId);
+                }
+
+                var userOutput = user.ToOutput();
+                return ResultData<UserOutput>.Success(userOutput);
             }
-                
-
-            var userOutput = user.ToOutput();
-
-            return ResultData<UserOutput>.Success(userOutput);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Falha crítica ao processar usuário. CorrelationId: {CorrelationId}", correlationId);
+                throw;
+            }
         }
     }
 }

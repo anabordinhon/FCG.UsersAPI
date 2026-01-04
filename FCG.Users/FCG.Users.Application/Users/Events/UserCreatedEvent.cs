@@ -7,4 +7,6 @@ public class UserCreatedEvent
     public string NickName { get; set; } = default!;
     public string Role { get; set; } = default!;
     public DateTime CreatedAt { get; set; }
+    public Guid EventId { get; set; } = Guid.NewGuid();
+    public Guid CorrelationId { get; set; }
 }
