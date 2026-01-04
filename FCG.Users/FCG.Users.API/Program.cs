@@ -101,7 +101,7 @@ builder.Services.AddAuthentication(x =>
 
 
 
-builder.Services.AddMassTransitConfiguration();
+builder.Services.AddMassTransitConfiguration(builder.Configuration);
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();

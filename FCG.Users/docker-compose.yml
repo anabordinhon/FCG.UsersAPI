@@ -20,17 +20,6 @@ services:
       - "5672:5672"
       - "15672:15672"
 
-  migrations:
-    container_name: users-api-migrations
-    build:
-      context: .
-      dockerfile: FCG.Users.API/Dockerfile
-    command: ["database", "update", "--project", "FCG.Users.API/FCG.Users.API.csproj"]
-    environment:
-      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=FiapCloudGames;User Id=sa;Password=123Aa321;TrustServerCertificate=True"
-    depends_on:
-      - sqlserver
-
   users-api:
     container_name: users-api
     build:
@@ -43,3 +32,9 @@ services:
       - rabbitmq
     environment:
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=FiapCloudGames;User Id=sa;Password=123Aa321;TrustServerCertificate=True"
+
+      RabbitMq__Host: "rabbitmq" 
+      RabbitMq__Username: "guest"
+      RabbitMq__Password: "guest"
+      
+      Jwt__SecretKey: "k8j2h9d7f6g5h4j3k2l1m0n9b8v7c6x5z4a3s2d1f0"
