@@ -73,3 +73,8 @@ Desktop.ini
 *.bak
 *.old
 *.orig
+/FCG.Users/FCG.Users.API/Dockerfile_old
+/FCG.Users/FCG.Users.API/Dockerfile_old2
+/FCG.Users/docker-compose - Copia.yml
+/FCG.Users/reset-database.ps1
+/FCG.Users/k8s/secret.yaml

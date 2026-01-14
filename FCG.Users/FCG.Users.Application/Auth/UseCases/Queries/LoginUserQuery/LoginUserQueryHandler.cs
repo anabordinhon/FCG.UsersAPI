@@ -47,7 +47,7 @@ public class LoginUserQueryHandler : ILoginUserQueryHandler
             new LoginUserQueryOutput
             {
                 Token = token,
-                UserId = user.Id,
+                PublicId = user.PublicId,
                 Role = user.Role.ToString()
             });
     }

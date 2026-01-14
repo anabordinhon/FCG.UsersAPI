@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: users-api-config
+data:
+  ASPNETCORE_ENVIRONMENT: "Development"
+  
+  # Configurações do MassTransit / RabbitMQ
+  # O valor 'rabbitmq-service' deve ser o nome exato do Service no arquivo infrastructure-rabbitmq.yaml da sua dupla
+  RabbitMq__Host: "rabbitmq-service"
+  RabbitMq__VirtualHost: "/"
+  RabbitMq__Username: "guest"
