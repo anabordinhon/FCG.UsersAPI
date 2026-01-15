@@ -62,22 +62,22 @@ public class UsersController : ControllerBase
         return result.ToNoContentActionResult();
     }
 
-    //[AllowAnonymous]
-    //[HttpPost("create-admin")]
-    //public async Task<IActionResult> CreateAdmin([FromServices] IAddOrUpdateUserCommandHandler handler)
-    //{
-    //    var input = new AddOrUpdateUserInput
-    //    {
-    //        Name = "Admin Master",       // Nome completo
-    //        Nick = "admin",              // NickName
-    //        Email = "admin@fcg.com",
-    //        Password = "Senha123!",
-    //        Role = (int)EUserRole.Admin  // Role como int, se for enum
-    //    };
+    [AllowAnonymous]
+    [HttpPost("create-admin")]
+    public async Task<IActionResult> CreateAdmin([FromServices] IAddOrUpdateUserCommandHandler handler)
+    {
+        var input = new AddOrUpdateUserInput
+        {
+            Name = "Admin Master",       // Nome completo
+            Nick = "admin",              // NickName
+            Email = "admin@fcg.com",
+            Password = "Senha123!",
+            Role = (int)EUserRole.Admin  // Role como int, se for enum
+        };
 
-    //    var command = input.MapToCommand();
-    //    var result = await handler.Handle(command, CancellationToken.None);
+        var command = input.MapToCommand();
+        var result = await handler.Handle(command, CancellationToken.None);
 
-    //    return result.ToCreatedActionResult($"/api/users/{result.Data.PublicId}");
-    //}
+        return result.ToCreatedActionResult($"/api/users/{result.Data.PublicId}");
+    }
 }
