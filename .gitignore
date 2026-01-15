@@ -78,3 +78,7 @@ Desktop.ini
 /FCG.Users/docker-compose - Copia.yml
 /FCG.Users/reset-database.ps1
 /FCG.Users/k8s/secret.yaml
+
+**/secret.yaml
+k8s/secret.yaml
+k8s/*-secret.yaml

@@ -6,8 +6,10 @@ using FCG.Users.Application.Users.UseCases.Commands.AddUser;
 using FCG.Users.Domain.Common.Enuns;
 using FCG.Users.Domain.Users.Entities;
 using FCG.Users.Domain.Users.ValueObjects;
-using FluentAssertions;
 using FCG.Users.Test.Fakers;
+using FluentAssertions;
+using MassTransit;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace FCG.Users.Test.Application.Users.UseCases.Commands
@@ -16,6 +18,8 @@ namespace FCG.Users.Test.Application.Users.UseCases.Commands
     {
         private readonly Mock<IHashHelper> _hashHelperMock;
         private readonly Mock<IUserCommandRepository> _userRepositoryMock;
+        private readonly Mock<ILogger<AddOrUpdateUserCommandHandler>> _loggerMock;
+        private readonly Mock<IPublishEndpoint> _publishEndpointMock;
         private readonly AddOrUpdateUserCommandHandler _handler;
         private readonly Faker _faker;
         private readonly string _fullName;
@@ -27,8 +31,24 @@ namespace FCG.Users.Test.Application.Users.UseCases.Commands
         {
             _hashHelperMock = new Mock<IHashHelper>();
             _userRepositoryMock = new Mock<IUserCommandRepository>();
+            _loggerMock = new Mock<ILogger<AddOrUpdateUserCommandHandler>>();
+            _publishEndpointMock = new Mock<IPublishEndpoint>();
 
-            _handler = new AddOrUpdateUserCommandHandler(_hashHelperMock.Object, _userRepositoryMock.Object);
+            // return the same entity passed to AddAsync/Update to avoid nulls in handler logic
+            _userRepositoryMock
+                .Setup(r => r.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((User u, CancellationToken ct) => u);
+
+            _userRepositoryMock
+                .Setup(r => r.Update(It.IsAny<User>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((User u, CancellationToken ct) => u);
+
+            _handler = new AddOrUpdateUserCommandHandler(
+                _hashHelperMock.Object,
+                _userRepositoryMock.Object,
+                _loggerMock.Object,
+                _publishEndpointMock.Object
+            );
 
             _faker = new Faker("pt_BR");
             _fullName = _faker.Name.FullName();
@@ -61,7 +81,7 @@ namespace FCG.Users.Test.Application.Users.UseCases.Commands
             );
 
             _hashHelperMock.Setup(h => h.GenerateHash(It.IsAny<RawPassword>()))
-                           .Returns((HashResult: "hashed", Salt: "salt"));
+                           .Returns((Hash: "hashed", Salt: "salt"));
 
             _userRepositoryMock.Setup(r => r.UserExistsAsync(It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
                                .ReturnsAsync(false);
@@ -97,7 +117,7 @@ namespace FCG.Users.Test.Application.Users.UseCases.Commands
 
 
             _hashHelperMock.Setup(h => h.GenerateHash(It.IsAny<RawPassword>()))
-                           .Returns((HashResult: "hashed", Salt: "salt"));
+                           .Returns((Hash: "hashed", Salt: "salt"));
 
             _userRepositoryMock.Setup(r => r.UserExistsAsync(existingUser.PublicId, It.IsAny<CancellationToken>()))
                                .ReturnsAsync(true);

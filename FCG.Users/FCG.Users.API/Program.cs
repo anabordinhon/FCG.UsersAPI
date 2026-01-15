@@ -9,9 +9,10 @@ using FCG.Users.Application.Users.UseCases.Queries.GetUsersPaged;
 using FCG.Users.Infrastructure.Adapters.Auth.Jwt;
 using FCG.Users.Infrastructure.Adapters.Common;
 using FCG.Users.Infrastructure.Adapters.Users.Repositories;
+using FCG.Users.Infrastructure.Messaging.Bus;
 using FCG.Users.Infrastructure.Persistence;
 using FCG.Users.Infrastructure.Persistence.Interceptors;
-using FCG.Users.Infrastructure.Messaging.Bus;
+using FCG.Users.Infrastructure.Persistence.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -78,6 +79,11 @@ builder.Services.AddSwaggerGen(c =>
 var jwtSecretKey = builder.Configuration["Jwt:SecretKey"]
     ?? throw new InvalidOperationException("JWT SecretKey não configurada (verifique appsettings / User Secrets)");
 
+Console.WriteLine($"=== JWT CONFIG CATALOG ===");
+Console.WriteLine($"JWT Key Length: {jwtSecretKey.Length}");
+Console.WriteLine($"JWT Key (primeiros 10 chars): {jwtSecretKey.Substring(0, Math.Min(10, jwtSecretKey.Length))}...");
+Console.WriteLine($"=========================");
+
 var key = Encoding.ASCII.GetBytes(jwtSecretKey);
 
 builder.Services.AddAuthentication(x =>
@@ -106,6 +112,14 @@ builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var hashHelper = scope.ServiceProvider.GetRequiredService<IHashHelper>();
+    var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+
+    await AdminUserSeed.EnsureAdminUserAsync(db, hashHelper, configuration);
+}
 
 app.MapHealthChecks("/health");
 
@@ -114,8 +128,7 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

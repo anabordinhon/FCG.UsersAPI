@@ -11,9 +11,9 @@ public static class MassTransitConfig
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var rabbitHost = configuration["RabbitMq:Host"] ?? "localhost";
-        var rabbitUser = configuration["RabbitMq:Username"] ?? "guest";
-        var rabbitPass = configuration["RabbitMq:Password"] ?? "guest";
+        var rabbitHost = configuration["RabbitMQ:Host"] ?? "localhost";
+        var rabbitUser = configuration["RabbitMQ:Username"] ?? "guest";
+        var rabbitPass = configuration["RabbitMQ:Password"] ?? "guest";
 
         services.AddMassTransit(x =>
         {

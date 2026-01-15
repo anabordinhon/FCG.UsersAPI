@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: users-api-deployment
+  name: users-api
   labels:
     app: users-api
 spec:
@@ -14,63 +14,25 @@ spec:
       labels:
         app: users-api
     spec:
-      # ---------------------------------------------------------
-      # 1. INIT CONTAINER (MIGRATIONS)
-      # ---------------------------------------------------------
-      initContainers:
-      - name: db-migration
-        image: users-api:latest
-        imagePullPolicy: IfNotPresent
-        command: ["./efbundle"]
-        env:
-        - name: ConnectionStrings__DefaultConnection
-          valueFrom:
-            secretKeyRef:
-              name: users-api-secret
-              key: ConnectionStrings__DefaultConnection
-
-      # ---------------------------------------------------------
-      # 2. CONTAINER PRINCIPAL
-      # ---------------------------------------------------------
       containers:
-      - name: users-api
-        image: users-api:latest
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 8080
-        env:
-        # ConfigMap
-        - name: ASPNETCORE_ENVIRONMENT
-          valueFrom:
-            configMapKeyRef:
-              name: users-api-config
-              key: ASPNETCORE_ENVIRONMENT
-        - name: RabbitMq__Host
-          valueFrom:
-            configMapKeyRef:
-              name: users-api-config
-              key: RabbitMq__Host
-        - name: RabbitMq__Username
-          valueFrom:
-            configMapKeyRef:
-              name: users-api-config
-              key: RabbitMq__Username
-              
-        # Secrets
-        - name: RabbitMq__Password
-          valueFrom:
-            secretKeyRef:
-              name: users-api-secret
-              key: RabbitMq__Password
-        - name: ConnectionStrings__DefaultConnection
-          valueFrom:
-            secretKeyRef:
-              name: users-api-secret
-              key: ConnectionStrings__DefaultConnection
-              
-        # JWT Corrigido
-        - name: Jwt__SecretKey
-          valueFrom:
-            secretKeyRef:
-              name: users-api-secret
-              key: Jwt__SecretKey
+        - name: users-api
+          image: usersapi:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: users-api-config
+            - secretRef:
+                name: users-api-secret
+          env:
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: password
