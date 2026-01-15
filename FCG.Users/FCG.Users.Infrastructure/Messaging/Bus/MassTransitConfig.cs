@@ -1,3 +1,4 @@
+using FCG.Users.Application.Users.Events;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +24,8 @@ public static class MassTransitConfig
                     h.Username(rabbitUser);
                     h.Password(rabbitPass);
                 });
+
+                cfg.Message<UserCreatedEvent>(m => m.SetEntityName("user-created-exchange"));
 
                 cfg.ConfigureEndpoints(context);
             });
