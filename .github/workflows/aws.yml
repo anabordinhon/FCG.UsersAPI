@@ -24,7 +24,8 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
-        context: .
+        context: ./FCG.Users/FCG.Users.API
+        file: ./FCG.Users/FCG.Users.API/Dockerfile
         push: true
         # AQUI: O nome da imagem no Docker Hub
         # Ex: anaarquiteta/pagamentos-api:latest
