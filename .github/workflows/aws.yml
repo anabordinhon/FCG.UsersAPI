@@ -39,17 +39,15 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          # 1. Entra na pasta onde criamos o docker-compose.yml central
-          cd /home/ubuntu/app
-          
-          # 2. Garante que temos a versão mais recente da imagem deste serviço
-          # Substitua 'nome-do-servico' pelo nome EXATO que está no docker-compose.yml sob 'services:'
+          # 1. Baixa as imagens atualizadas
           docker compose pull usersapi
+          docker pull ${{ secrets.DOCKER_USERNAME }}/user-api-image:migrations
           
-          # 3. Recria apenas o container deste serviço
-          # --no-deps: Não reinicia serviços dependentes (como o banco)
-          # -d: Roda em background
+          # 2. RODA A MIGRATION ANTES DO DEPLOY (Totalmente automatizado)
+          docker run --rm --env-file .env ${{ secrets.DOCKER_USERNAME }}/user-api-image:migrations
+          
+          # 3. Sobe a API nova apenas se a migration acima deu sucesso
           docker compose up -d --no-deps usersapi
           
-          # 4. Limpa imagens antigas para economizar espaço
+          # 4. Limpa imagens antigas
           docker image prune -f
