@@ -45,6 +45,9 @@ jobs:
           script: |
             set -euo pipefail
             cd /home/ubuntu/app
+            docker compose up -d rabbitmq
+            echo "Aguardando RabbitMQ ficar healthy..."
+            sleep 20
             docker compose pull usersapi-migration usersapi
             docker compose up usersapi-migration --no-deps
             docker compose up -d usersapi --no-deps
