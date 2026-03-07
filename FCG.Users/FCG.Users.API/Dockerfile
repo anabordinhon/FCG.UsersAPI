@@ -32,4 +32,4 @@ WORKDIR /src
 RUN dotnet tool install --global dotnet-ef --version 8.0.8
 ENV PATH="${PATH}:/root/.dotnet/tools"
 
-ENTRYPOINT ["dotnet", "ef", "database", "update", "--no-build", "--project", "FCG.Users.Infrastructure/FCG.Users.Infrastructure.csproj", "--startup-project", "FCG.Users.API/FCG.Users.API.csproj", "--verbose"]
+ENTRYPOINT ["dotnet", "ef", "database", "update", "--no-build", "--configuration", "Release", "--project", "FCG.Users.Infrastructure/FCG.Users.Infrastructure.csproj", "--startup-project", "FCG.Users.API/FCG.Users.API.csproj", "--verbose"]
