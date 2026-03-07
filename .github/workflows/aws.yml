@@ -17,16 +17,25 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    # 3. Build e Push da Imagem (gerando as duas tags)
-    - name: Build and push Docker image
+    # 3. Build e Push da imagem da API (estágio runtime)
+    - name: Build and push API image
       uses: docker/build-push-action@v5
       with:
-        context: ./FCG.Users/FCG.Users.API
+        context: ./FCG.Users
         file: ./FCG.Users/FCG.Users.API/Dockerfile
+        target: runtime
         push: true
-        tags: |
-          ${{ secrets.DOCKER_USERNAME }}/user-api-image:latest
-          ${{ secrets.DOCKER_USERNAME }}/user-api-image:migrations
+        tags: ${{ secrets.DOCKER_USERNAME }}/user-api-image:latest
+
+    # 4. Build e Push da imagem de Migrations (estágio migrations)
+    - name: Build and push Migrations image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./FCG.Users
+        file: ./FCG.Users/FCG.Users.API/Dockerfile
+        target: migrations
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/user-api-image:migrations
 
     # 4. Conecta via SSH e roda o compose
     - name: Deploy via SSH
