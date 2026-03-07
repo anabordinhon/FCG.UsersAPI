@@ -36,17 +36,38 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/user-api-image:migrations
 
+      - name: Copy docker-compose and .env to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.yml"
+          target: "/home/ubuntu/app"
+
+      - name: Create .env on EC2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            mkdir -p /home/ubuntu/app
+            cat > /home/ubuntu/app/.env << 'EOF'
+            ${{ secrets.ENV_FILE }}
+            EOF
+
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -euo pipefail
-            cd /home/ubuntu
-
-            docker compose pull usersapi usersapi-migration
-            docker compose up -d usersapi
+            cd /home/ubuntu/app
+            docker compose pull usersapi-migration usersapi
+            docker compose up usersapi-migration --no-deps
+            docker compose up -d usersapi --no-deps
             docker compose ps
             docker image prune -f
