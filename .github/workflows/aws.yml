@@ -27,11 +27,19 @@ jobs:
         context: ./FCG.Users/FCG.Users.API
         file: ./FCG.Users/FCG.Users.API/Dockerfile
         push: true
-        # AQUI: O nome da imagem no Docker Hub
-        # Ex: anaarquiteta/pagamentos-api:latest
         tags: ${{ secrets.DOCKER_USERNAME }}/user-api-image:latest
 
-    # 4. Conecta via SSH e atualiza APENAS este serviço
+    # 4. Copia o arquivo docker-compose.yml atualizado para a EC2
+    - name: Copy Docker Compose to EC2
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "docker-compose.yml"
+        target: "/home/ubuntu" # Ajuste se você rodar o projeto em outra pasta na EC2
+
+    # 5. Conecta via SSH e atualiza APENAS este serviço usando a inteligência do Compose
     - name: Deploy via SSH
       uses: appleboy/ssh-action@master
       with:
@@ -39,15 +47,18 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          # 1. Baixa as imagens atualizadas
-          docker compose pull usersapi
-          docker pull ${{ secrets.DOCKER_USERNAME }}/user-api-image:migrations
+          # Navega para a pasta onde o docker-compose.yml foi copiado
+          cd /home/ubuntu
           
-          # 2. RODA A MIGRATION ANTES DO DEPLOY (Totalmente automatizado)
-          docker run --rm --env-file .env ${{ secrets.DOCKER_USERNAME }}/user-api-image:migrations
+          # 1. Baixa as imagens atualizadas da API e da Migration
+          docker compose pull usersapi usersapi-migration
           
-          # 3. Sobe a API nova apenas se a migration acima deu sucesso
-          docker compose up -d --no-deps usersapi
+          # 2. Sobe a API nova. 
+          # Sem o --no-deps, o Compose vai: 
+          #   - Checar se o RabbitMQ está healthy
+          #   - Rodar o container de migration
+          #   - Só depois subir a usersapi
+          docker compose up -d usersapi
           
-          # 4. Limpa imagens antigas
+          # 3. Limpa imagens antigas para liberar disco
           docker image prune -f
