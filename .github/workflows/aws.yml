@@ -36,19 +36,6 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/user-api-image:migrations
 
-      - name: Create .env on EC2
-        uses: appleboy/ssh-action@v0.1.10
-        env:
-          ENV_FILE: ${{ secrets.ENV_FILE }}
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          envs: ENV_FILE
-          script: |
-            mkdir -p /home/ubuntu/app
-            echo "$ENV_FILE" > /home/ubuntu/app/.env
-
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.10
         with:
