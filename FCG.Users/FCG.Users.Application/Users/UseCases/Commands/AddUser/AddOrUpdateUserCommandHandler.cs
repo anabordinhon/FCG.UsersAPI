@@ -5,7 +5,6 @@ using FCG.Users.Application.Users.Mappers;
 using FCG.Users.Application.Users.Outputs;
 using FCG.Users.Application.Users.Ports;
 using FCG.Users.Domain.Users.Entities;
-using MassTransit;
 using Microsoft.Extensions.Logging;
 
 namespace FCG.Users.Application.Users.UseCases.Commands.AddUser
@@ -15,17 +14,20 @@ namespace FCG.Users.Application.Users.UseCases.Commands.AddUser
         private readonly IHashHelper _hashHelper;
         private readonly IUserCommandRepository _userCommandRepository;
         private readonly ILogger<AddOrUpdateUserCommandHandler> _logger;
-        private readonly IPublishEndpoint _publishEndpoint;
+        private readonly IEventPublisher _eventPublisher;
+
         public AddOrUpdateUserCommandHandler(
             IHashHelper hashHelper,
             IUserCommandRepository userCommandRepository,
             ILogger<AddOrUpdateUserCommandHandler> logger,
-            IPublishEndpoint publishEndpoint)
+            IEventPublisher eventPublisher
+)
         {
             _hashHelper = hashHelper;
             _userCommandRepository = userCommandRepository;
             _logger = logger;
-            _publishEndpoint = publishEndpoint;
+            _eventPublisher = eventPublisher;
+
         }
         public async Task<ResultData<UserOutput>> Handle(AddOrUpdateUserCommand command, CancellationToken cancellationToken)
         {
@@ -53,23 +55,11 @@ namespace FCG.Users.Application.Users.UseCases.Commands.AddUser
                         user.PublicId,
                         correlationId);
 
-                    var userCreatedEvent = new UserCreatedEvent
-                    {
-                        UserId = user.PublicId,
-                        Email = user.Email.Email,
-                        Name = user.FullName.Name,
-                        NickName = user.NickName.Nick,
-                        Role = user.Role.ToString(),
-                        CreatedAt = DateTime.UtcNow,
-                        CorrelationId = correlationId
-                    };
-
-                    await _publishEndpoint.Publish(userCreatedEvent, cancellationToken);
-
+                    await _eventPublisher.PublishAsync(new NotificationEvent { Type = "welcome" }, cancellationToken);
                     _logger.LogInformation(
-                        "UserCreatedEvent publicado. EventId: {EventId}, CorrelationId: {CorrelationId}, Destino: RabbitMQ",
-                        userCreatedEvent.EventId,
-                        userCreatedEvent.CorrelationId);
+                        "Notificação 'welcome' publicada no SQS. UserId: {UserId}, CorrelationId: {CorrelationId}",
+                        user.PublicId,
+                        correlationId);
                 }
 
                 var userOutput = user.ToOutput();
