@@ -9,7 +9,6 @@ using FCG.Users.Application.Users.UseCases.Queries.GetUsersPaged;
 using FCG.Users.Infrastructure.Adapters.Auth.Jwt;
 using FCG.Users.Infrastructure.Adapters.Common;
 using FCG.Users.Infrastructure.Adapters.Users.Repositories;
-using FCG.Users.Infrastructure.Messaging.Bus;
 using FCG.Users.Infrastructure.Persistence;
 using FCG.Users.Infrastructure.Persistence.Interceptors;
 using FCG.Users.Infrastructure.Persistence.Seed;
@@ -104,10 +103,6 @@ builder.Services.AddAuthentication(x =>
     };
 });
 
-
-
-
-builder.Services.AddMassTransitConfiguration(builder.Configuration);
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();

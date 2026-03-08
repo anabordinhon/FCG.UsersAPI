@@ -8,7 +8,6 @@ using FCG.Users.Domain.Users.Entities;
 using FCG.Users.Domain.Users.ValueObjects;
 using FCG.Users.Test.Fakers;
 using FluentAssertions;
-using MassTransit;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -19,7 +18,7 @@ namespace FCG.Users.Test.Application.Users.UseCases.Commands
         private readonly Mock<IHashHelper> _hashHelperMock;
         private readonly Mock<IUserCommandRepository> _userRepositoryMock;
         private readonly Mock<ILogger<AddOrUpdateUserCommandHandler>> _loggerMock;
-        private readonly Mock<IPublishEndpoint> _publishEndpointMock;
+        private readonly Mock<IEventPublisher> _eventPublisherMock;
         private readonly AddOrUpdateUserCommandHandler _handler;
         private readonly Faker _faker;
         private readonly string _fullName;
@@ -32,7 +31,7 @@ namespace FCG.Users.Test.Application.Users.UseCases.Commands
             _hashHelperMock = new Mock<IHashHelper>();
             _userRepositoryMock = new Mock<IUserCommandRepository>();
             _loggerMock = new Mock<ILogger<AddOrUpdateUserCommandHandler>>();
-            _publishEndpointMock = new Mock<IPublishEndpoint>();
+            _eventPublisherMock = new Mock<IEventPublisher>();
 
             // return the same entity passed to AddAsync/Update to avoid nulls in handler logic
             _userRepositoryMock
@@ -47,7 +46,7 @@ namespace FCG.Users.Test.Application.Users.UseCases.Commands
                 _hashHelperMock.Object,
                 _userRepositoryMock.Object,
                 _loggerMock.Object,
-                _publishEndpointMock.Object
+                _eventPublisherMock.Object
             );
 
             _faker = new Faker("pt_BR");
