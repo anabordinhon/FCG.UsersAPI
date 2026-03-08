@@ -9,6 +9,7 @@ using FCG.Users.Application.Users.UseCases.Queries.GetUsersPaged;
 using FCG.Users.Infrastructure.Adapters.Auth.Jwt;
 using FCG.Users.Infrastructure.Adapters.Common;
 using FCG.Users.Infrastructure.Adapters.Users.Repositories;
+using FCG.Users.Infrastructure.Messaging;
 using FCG.Users.Infrastructure.Persistence;
 using FCG.Users.Infrastructure.Persistence.Interceptors;
 using FCG.Users.Infrastructure.Persistence.Seed;
@@ -32,6 +33,7 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext, UserContext>();
 builder.Services.AddScoped<IAddOrUpdateUserCommandHandler, AddOrUpdateUserCommandHandler>();
+builder.Services.AddScoped<IEventPublisher, SqsEventPublisher>();
 builder.Services.AddScoped<IUserCommandRepository, UserCommandRepository>();
 builder.Services.AddScoped<IUserQueryRepository, UserQueryRepository>();
 builder.Services.AddScoped<IGetUserByIdQueryHandler, GetUserByIdQueryHandler>();
