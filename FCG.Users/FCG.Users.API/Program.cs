@@ -108,6 +108,7 @@ builder.Services.AddAuthentication(x =>
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
+app.UsePathBase("/prod");
 
 using (var scope = app.Services.CreateScope())
 {
