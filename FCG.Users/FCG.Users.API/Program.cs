@@ -42,6 +42,9 @@ builder.Logging.AddAWSProvider();
 const string serviceName = "FCG.Users";
 const string serviceVersion = "1.0.0";
 
+var collectorEndpoint = builder.Configuration["OpenTelemetry:CollectorEndpoint"]
+    ?? "http://172.17.0.1:4317";
+
 builder.Services
     .AddOpenTelemetry()
     .WithTracing(tracing => tracing
@@ -54,11 +57,11 @@ builder.Services
         .AddXRayTraceId()
         .SetSampler(new AlwaysOnSampler())
         .AddConsoleExporter()
-       .AddOtlpExporter(opts =>
-       {
-           opts.Endpoint = new Uri("http://localhost:4317");
-           opts.Protocol = OtlpExportProtocol.Grpc;
-       })
+        .AddOtlpExporter(opts =>
+        {
+            opts.Endpoint = new Uri(collectorEndpoint);
+            opts.Protocol = OtlpExportProtocol.Grpc;
+        })
     )
     .WithMetrics(metrics => metrics
         .SetResourceBuilder(
@@ -70,9 +73,8 @@ builder.Services
         .AddConsoleExporter()
         .AddOtlpExporter(opts =>
         {
-            opts.Endpoint = new Uri(
-                $"https://logs.{builder.Configuration["AWS:Region"] ?? "us-east-1"}.amazonaws.com/v1/metrics");
-            opts.Protocol = OtlpExportProtocol.HttpProtobuf;
+            opts.Endpoint = new Uri(collectorEndpoint);
+            opts.Protocol = OtlpExportProtocol.Grpc;
         })
     )
     .WithLogging(logging => logging
@@ -82,9 +84,8 @@ builder.Services
         .AddConsoleExporter()
         .AddOtlpExporter(opts =>
         {
-            opts.Endpoint = new Uri(
-                $"https://logs.{builder.Configuration["AWS:Region"] ?? "us-east-1"}.amazonaws.com/v1/logs");
-            opts.Protocol = OtlpExportProtocol.HttpProtobuf;
+            opts.Endpoint = new Uri(collectorEndpoint);
+            opts.Protocol = OtlpExportProtocol.Grpc;
         })
     );
 
