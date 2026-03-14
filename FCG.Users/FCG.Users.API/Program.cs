@@ -17,15 +17,81 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry;
+using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Extensions.AWS.Trace;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using System.Text;
 
+
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.AddOpenTelemetry(logging =>
+{
+    logging.IncludeFormattedMessage = true;
+    logging.IncludeScopes = true;
+    logging.ParseStateValues = true;
+});
+builder.Logging.AddAWSProvider();
+
+const string serviceName = "FCG.Users";
+const string serviceVersion = "1.0.0";
+
+builder.Services
+    .AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .SetResourceBuilder(
+            ResourceBuilder.CreateDefault()
+                .AddService(serviceName, serviceVersion: serviceVersion))
+        .AddAspNetCoreInstrumentation(opts => opts.RecordException = true)
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddXRayTraceId()
+        .SetSampler(new AlwaysOnSampler())
+        .AddConsoleExporter()
+       .AddOtlpExporter(opts =>
+       {
+           opts.Endpoint = new Uri("http://localhost:4317");
+           opts.Protocol = OtlpExportProtocol.Grpc;
+       })
+    )
+    .WithMetrics(metrics => metrics
+        .SetResourceBuilder(
+            ResourceBuilder.CreateDefault()
+                .AddService(serviceName, serviceVersion: serviceVersion))
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddConsoleExporter()
+        .AddOtlpExporter(opts =>
+        {
+            opts.Endpoint = new Uri(
+                $"https://logs.{builder.Configuration["AWS:Region"] ?? "us-east-1"}.amazonaws.com/v1/metrics");
+            opts.Protocol = OtlpExportProtocol.HttpProtobuf;
+        })
+    )
+    .WithLogging(logging => logging
+        .SetResourceBuilder(
+            ResourceBuilder.CreateDefault()
+                .AddService(serviceName, serviceVersion: serviceVersion))
+        .AddConsoleExporter()
+        .AddOtlpExporter(opts =>
+        {
+            opts.Endpoint = new Uri(
+                $"https://logs.{builder.Configuration["AWS:Region"] ?? "us-east-1"}.amazonaws.com/v1/logs");
+            opts.Protocol = OtlpExportProtocol.HttpProtobuf;
+        })
+    );
 
 builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 {
     var userContext = serviceProvider.GetService<IUserContext>();
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
     options.UseSqlServer(connectionString);
     options.AddInterceptors(new AuditInterceptor(userContext));
 }, ServiceLifetime.Scoped);
@@ -51,16 +117,14 @@ builder.Services.AddSwaggerGen(c =>
         Title = "Fiap Cloud Games Users API",
         Version = "v1"
     });
-
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Description = "JWT Authorization header. Example: \"Authorization: Bearer {token}\"",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
     });
-
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -69,21 +133,16 @@ builder.Services.AddSwaggerGen(c =>
                 Reference = new OpenApiReference
                 {
                     Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
+                    Id   = "Bearer"
                 }
             },
-            new string[] {}
+            Array.Empty<string>()
         }
     });
 });
 
 var jwtSecretKey = builder.Configuration["Jwt:SecretKey"]
-    ?? throw new InvalidOperationException("JWT SecretKey não configurada (verifique appsettings / User Secrets)");
-
-Console.WriteLine($"=== JWT CONFIG CATALOG ===");
-Console.WriteLine($"JWT Key Length: {jwtSecretKey.Length}");
-Console.WriteLine($"JWT Key (primeiros 10 chars): {jwtSecretKey.Substring(0, Math.Min(10, jwtSecretKey.Length))}...");
-Console.WriteLine($"=========================");
+    ?? throw new InvalidOperationException("JWT SecretKey não configurada");
 
 var key = Encoding.ASCII.GetBytes(jwtSecretKey);
 
@@ -94,7 +153,7 @@ builder.Services.AddAuthentication(x =>
 })
 .AddJwtBearer(x =>
 {
-    x.RequireHttpsMetadata = false; // Em produção true
+    x.RequireHttpsMetadata = false;
     x.SaveToken = true;
     x.TokenValidationParameters = new TokenValidationParameters
     {
@@ -108,19 +167,24 @@ builder.Services.AddAuthentication(x =>
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
-//app.UsePathBase("/prod");
+
+Sdk.SetDefaultTextMapPropagator(
+    new CompositeTextMapPropagator(new TextMapPropagator[]
+    {
+        new AWSXRayPropagator(),
+        new TraceContextPropagator(),
+        new BaggagePropagator()
+    }));
 
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var hashHelper = scope.ServiceProvider.GetRequiredService<IHashHelper>();
     var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-
     await AdminUserSeed.EnsureAdminUserAsync(db, hashHelper, configuration);
 }
 
 app.MapHealthChecks("/health");
-
 app.UseSwagger();
 app.UseSwaggerUI();
 
@@ -129,7 +193,5 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
