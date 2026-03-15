@@ -56,5 +56,15 @@ namespace FCG.Users.Infrastructure.Adapters.Users.Repositories
             return await _dbContext.Users
                 .FirstOrDefaultAsync(u => u.Email.Email.ToLower() == normalizedEmail);
         }
+
+        public async Task<List<User>> GetAuditHistoryByPublicIdAsync(Guid publicId, CancellationToken cancellationToken)
+        {
+            return await _dbContext.Users
+                .TemporalAll()
+                .Where(u => u.PublicId == publicId)
+                .OrderBy(u => EF.Property<DateTime>(u, "PeriodStart"))
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
     }
 }
