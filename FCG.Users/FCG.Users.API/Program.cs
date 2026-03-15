@@ -40,11 +40,12 @@ builder.Logging.AddOpenTelemetry(logging =>
     logging.IncludeScopes = true;
     logging.ParseStateValues = true;
 });
-builder.Logging.AddAWSProvider(config =>
+var awsLoggerConfig = new AWS.Logger.AWSLoggerConfig
 {
-    config.Region = builder.Configuration["AWS:Region"] ?? "us-east-1";
-    config.LogGroup = builder.Configuration["AWS.Logging:LogGroup"] ?? "/fcg/users/api";
-});
+    Region = builder.Configuration["AWS:Region"] ?? "us-east-1",
+    LogGroup = builder.Configuration["AWS.Logging:LogGroup"] ?? "/fcg/users/api"
+};
+builder.Logging.AddAWSProvider(awsLoggerConfig);
 // ────────────────────────────────────────────────────────────────────────────
 
 const string serviceName = "FCG.Users";
