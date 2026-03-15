@@ -33,6 +33,16 @@ namespace FCG.Users.Domain.Users.Entities
 
         }
 
+        public void UpdateDetails(FullName fullName, EmailAddress email, NickName nickName, string passwordHash, string passwordSalt, EUserRole role)
+        {
+            FullName = fullName;
+            Email = email;
+            NickName = nickName;
+            PasswordHash = passwordHash;
+            PasswordSalt = passwordSalt;
+            Role = role;
+        }
+
         public void UpdatePassword(string password, string passwordIv)
         {
             PasswordHash = password;

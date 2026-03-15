@@ -40,14 +40,20 @@ namespace FCG.Users.Application.Users.UseCases.Commands.AddUser
 
                 var passwordHash = _hashHelper.GenerateHash(command.Password);
 
-                var user = User.Create(command.Name, command.Email, command.NickName, passwordHash.Hash, passwordHash.Salt, command.Role);
+                User user;
 
                 if (isUpdate)
                 {
+
+                    user = await _userCommandRepository.GetByIdAsync(command.PublicId.Value, cancellationToken);
+
+                    user.UpdateDetails(command.Name, command.Email, command.NickName, passwordHash.Hash, passwordHash.Salt, command.Role);
+
                     await _userCommandRepository.Update(user, cancellationToken);
                 }
                 else
                 {
+                    user = User.Create(command.Name, command.Email, command.NickName, passwordHash.Hash, passwordHash.Salt, command.Role);
                     await _userCommandRepository.AddAsync(user, cancellationToken);
 
                     _logger.LogInformation(

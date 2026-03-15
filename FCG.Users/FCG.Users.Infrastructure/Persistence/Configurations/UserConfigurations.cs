@@ -8,7 +8,11 @@ namespace FCG.Users.Infrastructure.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
-            builder.ToTable("User");
+            builder.ToTable("User", table => table.IsTemporal(t =>
+            {
+                t.HasPeriodStart("PeriodStart").HasColumnName("PeriodStart");
+                t.HasPeriodEnd("PeriodEnd").HasColumnName("PeriodEnd");
+            }));
 
             builder.HasKey(u => u.Id);
 
@@ -30,6 +34,12 @@ namespace FCG.Users.Infrastructure.Persistence.Configurations
 
             builder.OwnsOne(u => u.FullName, fullName =>
             {
+                fullName.ToTable("User", t => t.IsTemporal(tb =>
+                {
+                    tb.HasPeriodStart("PeriodStart").HasColumnName("PeriodStart");
+                    tb.HasPeriodEnd("PeriodEnd").HasColumnName("PeriodEnd");
+                }));
+
                 fullName.Property(fn => fn.Name)
                     .IsRequired()
                     .HasMaxLength(200)
@@ -38,6 +48,12 @@ namespace FCG.Users.Infrastructure.Persistence.Configurations
 
             builder.OwnsOne(u => u.Email, email =>
             {
+                email.ToTable("User", t => t.IsTemporal(tb =>
+                {
+                    tb.HasPeriodStart("PeriodStart").HasColumnName("PeriodStart");
+                    tb.HasPeriodEnd("PeriodEnd").HasColumnName("PeriodEnd");
+                }));
+
                 email.Property(e => e.Email)
                     .IsRequired()
                     .HasMaxLength(254)
@@ -49,6 +65,12 @@ namespace FCG.Users.Infrastructure.Persistence.Configurations
 
             builder.OwnsOne(u => u.NickName, nickName =>
             {
+                nickName.ToTable("User", t => t.IsTemporal(tb =>
+                {
+                    tb.HasPeriodStart("PeriodStart").HasColumnName("PeriodStart");
+                    tb.HasPeriodEnd("PeriodEnd").HasColumnName("PeriodEnd");
+                }));
+
                 nickName.Property(nn => nn.Nick)
                     .IsRequired()
                     .HasMaxLength(50)

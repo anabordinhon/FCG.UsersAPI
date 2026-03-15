@@ -52,6 +52,16 @@ namespace FCG.Users.Infrastructure.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
+                    b.Property<DateTime>("PeriodEnd")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("PeriodEnd");
+
+                    b.Property<DateTime>("PeriodStart")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("PeriodStart");
+
                     b.Property<Guid>("PublicId")
                         .HasColumnType("uniqueidentifier");
 
@@ -66,6 +76,17 @@ namespace FCG.Users.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("User", (string)null);
+
+                    b.ToTable(tb => tb.IsTemporal(ttb =>
+                            {
+                                ttb.UseHistoryTable("UserHistory");
+                                ttb
+                                    .HasPeriodStart("PeriodStart")
+                                    .HasColumnName("PeriodStart");
+                                ttb
+                                    .HasPeriodEnd("PeriodEnd")
+                                    .HasColumnName("PeriodEnd");
+                            }));
                 });
 
             modelBuilder.Entity("FCG.Users.Domain.Users.Entities.User", b =>
@@ -81,12 +102,33 @@ namespace FCG.Users.Infrastructure.Migrations
                                 .HasColumnType("nvarchar(254)")
                                 .HasColumnName("Email");
 
+                            b1.Property<DateTime>("PeriodEnd")
+                                .ValueGeneratedOnAddOrUpdate()
+                                .HasColumnType("datetime2")
+                                .HasColumnName("PeriodEnd");
+
+                            b1.Property<DateTime>("PeriodStart")
+                                .ValueGeneratedOnAddOrUpdate()
+                                .HasColumnType("datetime2")
+                                .HasColumnName("PeriodStart");
+
                             b1.HasKey("UserId");
 
                             b1.HasIndex("Email")
                                 .IsUnique();
 
-                            b1.ToTable("User");
+                            b1.ToTable("User", (string)null);
+
+                            b1.ToTable(tb => tb.IsTemporal(ttb =>
+                                    {
+                                        ttb.UseHistoryTable("UserHistory");
+                                        ttb
+                                            .HasPeriodStart("PeriodStart")
+                                            .HasColumnName("PeriodStart");
+                                        ttb
+                                            .HasPeriodEnd("PeriodEnd")
+                                            .HasColumnName("PeriodEnd");
+                                    }));
 
                             b1.WithOwner()
                                 .HasForeignKey("UserId");
@@ -103,9 +145,30 @@ namespace FCG.Users.Infrastructure.Migrations
                                 .HasColumnType("nvarchar(200)")
                                 .HasColumnName("FullName");
 
+                            b1.Property<DateTime>("PeriodEnd")
+                                .ValueGeneratedOnAddOrUpdate()
+                                .HasColumnType("datetime2")
+                                .HasColumnName("PeriodEnd");
+
+                            b1.Property<DateTime>("PeriodStart")
+                                .ValueGeneratedOnAddOrUpdate()
+                                .HasColumnType("datetime2")
+                                .HasColumnName("PeriodStart");
+
                             b1.HasKey("UserId");
 
-                            b1.ToTable("User");
+                            b1.ToTable("User", (string)null);
+
+                            b1.ToTable(tb => tb.IsTemporal(ttb =>
+                                    {
+                                        ttb.UseHistoryTable("UserHistory");
+                                        ttb
+                                            .HasPeriodStart("PeriodStart")
+                                            .HasColumnName("PeriodStart");
+                                        ttb
+                                            .HasPeriodEnd("PeriodEnd")
+                                            .HasColumnName("PeriodEnd");
+                                    }));
 
                             b1.WithOwner()
                                 .HasForeignKey("UserId");
@@ -122,12 +185,33 @@ namespace FCG.Users.Infrastructure.Migrations
                                 .HasColumnType("nvarchar(50)")
                                 .HasColumnName("NickName");
 
+                            b1.Property<DateTime>("PeriodEnd")
+                                .ValueGeneratedOnAddOrUpdate()
+                                .HasColumnType("datetime2")
+                                .HasColumnName("PeriodEnd");
+
+                            b1.Property<DateTime>("PeriodStart")
+                                .ValueGeneratedOnAddOrUpdate()
+                                .HasColumnType("datetime2")
+                                .HasColumnName("PeriodStart");
+
                             b1.HasKey("UserId");
 
                             b1.HasIndex("Nick")
                                 .IsUnique();
 
-                            b1.ToTable("User");
+                            b1.ToTable("User", (string)null);
+
+                            b1.ToTable(tb => tb.IsTemporal(ttb =>
+                                    {
+                                        ttb.UseHistoryTable("UserHistory");
+                                        ttb
+                                            .HasPeriodStart("PeriodStart")
+                                            .HasColumnName("PeriodStart");
+                                        ttb
+                                            .HasPeriodEnd("PeriodEnd")
+                                            .HasColumnName("PeriodEnd");
+                                    }));
 
                             b1.WithOwner()
                                 .HasForeignKey("UserId");
