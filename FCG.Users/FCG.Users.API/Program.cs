@@ -43,7 +43,7 @@ const string serviceName = "FCG.Users";
 const string serviceVersion = "1.0.0";
 
 var collectorEndpoint = builder.Configuration["OpenTelemetry:CollectorEndpoint"]
-    ?? "http://172.17.0.1:4317";
+    ?? "http://host.docker.internal:4317";
 
 builder.Services
     .AddOpenTelemetry()
