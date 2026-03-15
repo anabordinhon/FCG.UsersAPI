@@ -27,17 +27,25 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using System.Text;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
 
+// ── HTTP2 sem TLS (necessário para gRPC com OTel em HTTP) ────────────────────
+AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+// ────────────────────────────────────────────────────────────────────────────
+
+// ── CloudWatch Logs via ILogger ───────────────────────────────────────────────
 builder.Logging.AddOpenTelemetry(logging =>
 {
     logging.IncludeFormattedMessage = true;
     logging.IncludeScopes = true;
     logging.ParseStateValues = true;
 });
-builder.Logging.AddAWSProvider();
+builder.Logging.AddAWSProvider(config =>
+{
+    config.Region = builder.Configuration["AWS:Region"] ?? "us-east-1";
+    config.LogGroup = builder.Configuration["AWS.Logging:LogGroup"] ?? "/fcg/users/api";
+});
+// ────────────────────────────────────────────────────────────────────────────
 
 const string serviceName = "FCG.Users";
 const string serviceVersion = "1.0.0";
@@ -51,6 +59,7 @@ builder.Services
         .SetResourceBuilder(
             ResourceBuilder.CreateDefault()
                 .AddService(serviceName, serviceVersion: serviceVersion))
+        .SetErrorStatusOnException()                              // ← captura exceções como erro
         .AddAspNetCoreInstrumentation(opts => opts.RecordException = true)
         .AddHttpClientInstrumentation()
         .AddEntityFrameworkCoreInstrumentation()
@@ -61,6 +70,8 @@ builder.Services
         {
             opts.Endpoint = new Uri(collectorEndpoint);
             opts.Protocol = OtlpExportProtocol.Grpc;
+            opts.TimeoutMilliseconds = 10000;
+            opts.ExportProcessorType = ExportProcessorType.Simple; // ← envia imediatamente
         })
     )
     .WithMetrics(metrics => metrics
@@ -75,6 +86,7 @@ builder.Services
         {
             opts.Endpoint = new Uri(collectorEndpoint);
             opts.Protocol = OtlpExportProtocol.Grpc;
+            opts.TimeoutMilliseconds = 10000;
         })
     )
     .WithLogging(logging => logging
@@ -86,6 +98,7 @@ builder.Services
         {
             opts.Endpoint = new Uri(collectorEndpoint);
             opts.Protocol = OtlpExportProtocol.Grpc;
+            opts.TimeoutMilliseconds = 10000;
         })
     );
 
@@ -169,6 +182,7 @@ builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
+// ── Propagação do TraceId entre microsserviços ───────────────────────────────
 Sdk.SetDefaultTextMapPropagator(
     new CompositeTextMapPropagator(new TextMapPropagator[]
     {
@@ -176,6 +190,7 @@ Sdk.SetDefaultTextMapPropagator(
         new TraceContextPropagator(),
         new BaggagePropagator()
     }));
+// ────────────────────────────────────────────────────────────────────────────
 
 using (var scope = app.Services.CreateScope())
 {
