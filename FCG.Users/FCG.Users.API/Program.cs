@@ -17,10 +17,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using OpenTelemetry;
-using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Extensions.AWS.Trace;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -29,11 +26,6 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── HTTP2 sem TLS (necessário para gRPC com OTel em HTTP) ────────────────────
-AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-// ────────────────────────────────────────────────────────────────────────────
-
-// ── CloudWatch Logs via ILogger ───────────────────────────────────────────────
 builder.Logging.AddOpenTelemetry(logging =>
 {
     logging.IncludeFormattedMessage = true;
@@ -46,7 +38,6 @@ var awsLoggerConfig = new AWS.Logger.AWSLoggerConfig
     LogGroup = builder.Configuration["AWS.Logging:LogGroup"] ?? "/fcg/users/api"
 };
 builder.Logging.AddAWSProvider(awsLoggerConfig);
-// ────────────────────────────────────────────────────────────────────────────
 
 const string serviceName = "FCG.Users";
 const string serviceVersion = "1.0.0";
@@ -60,20 +51,11 @@ builder.Services
         .SetResourceBuilder(
             ResourceBuilder.CreateDefault()
                 .AddService(serviceName, serviceVersion: serviceVersion))
-        .SetErrorStatusOnException()                              // ← captura exceções como erro
         .AddAspNetCoreInstrumentation(opts => opts.RecordException = true)
         .AddHttpClientInstrumentation()
         .AddEntityFrameworkCoreInstrumentation()
-        .AddXRayTraceId()
         .SetSampler(new AlwaysOnSampler())
         .AddConsoleExporter()
-        .AddOtlpExporter(opts =>
-        {
-            opts.Endpoint = new Uri(collectorEndpoint);
-            opts.Protocol = OtlpExportProtocol.Grpc;
-            opts.TimeoutMilliseconds = 10000;
-            opts.ExportProcessorType = ExportProcessorType.Simple; // ← envia imediatamente
-        })
     )
     .WithMetrics(metrics => metrics
         .SetResourceBuilder(
@@ -87,7 +69,6 @@ builder.Services
         {
             opts.Endpoint = new Uri(collectorEndpoint);
             opts.Protocol = OtlpExportProtocol.Grpc;
-            opts.TimeoutMilliseconds = 10000;
         })
     )
     .WithLogging(logging => logging
@@ -99,7 +80,6 @@ builder.Services
         {
             opts.Endpoint = new Uri(collectorEndpoint);
             opts.Protocol = OtlpExportProtocol.Grpc;
-            opts.TimeoutMilliseconds = 10000;
         })
     );
 
@@ -182,16 +162,6 @@ builder.Services.AddAuthentication(x =>
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
-
-// ── Propagação do TraceId entre microsserviços ───────────────────────────────
-Sdk.SetDefaultTextMapPropagator(
-    new CompositeTextMapPropagator(new TextMapPropagator[]
-    {
-        new AWSXRayPropagator(),
-        new TraceContextPropagator(),
-        new BaggagePropagator()
-    }));
-// ────────────────────────────────────────────────────────────────────────────
 
 using (var scope = app.Services.CreateScope())
 {
