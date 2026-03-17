@@ -17,7 +17,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Extensions.AWS.Trace;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -25,6 +28,8 @@ using OpenTelemetry.Trace;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
 builder.Logging.AddOpenTelemetry(logging =>
 {
@@ -55,6 +60,7 @@ builder.Services
         .AddHttpClientInstrumentation()
         .AddEntityFrameworkCoreInstrumentation()
         .SetSampler(new AlwaysOnSampler())
+        .AddXRayTraceId()
         .AddConsoleExporter()
     )
     .WithMetrics(metrics => metrics
@@ -162,6 +168,14 @@ builder.Services.AddAuthentication(x =>
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
+
+Sdk.SetDefaultTextMapPropagator(
+    new CompositeTextMapPropagator(new TextMapPropagator[]
+    {
+        new AWSXRayPropagator(),
+        new TraceContextPropagator(),
+        new BaggagePropagator()
+    }));
 
 using (var scope = app.Services.CreateScope())
 {
