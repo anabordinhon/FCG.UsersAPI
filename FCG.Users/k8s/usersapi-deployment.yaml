@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: usersapi
-          image: daiana2026dev/users-api-image:latest
+          image: daiana2026dev/user-api-image:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
