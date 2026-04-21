@@ -55,6 +55,7 @@ namespace FCG.Users.Test.Application.Users.UseCases.Commands
             _nickName = _faker.Internet.UserName();
             _password = PasswordFaker.Generate();
         }
+
         /*
              * Nome: "Handle_ShouldAddUser_WhenUserDoesNotExist"
              * Aqui testamos o método Handle() para garantir que,
@@ -95,18 +96,23 @@ namespace FCG.Users.Test.Application.Users.UseCases.Commands
             _userRepositoryMock.Verify(r => r.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Once);
             _userRepositoryMock.Verify(r => r.Update(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
         }
+
         /*
          * Nome: "Handle_ShouldUpdateUser_WhenUserAlreadyExists"
          * Testa que, quando o usuário já existe, o método Update() é chamado em vez de AddAsync().
          * O mock do repositório retorna "true" para UserExistsAsync(),
-         * e após executar o Handle(), verificamos que Update() foi chamado exatamente uma vez.
+         * e GetByIdAsync() retorna uma entidade válida para que o handler
+         * possa chamar UpdateDetails() sem NullReferenceException.
+         * Após executar o Handle(), verificamos que Update() foi chamado exatamente uma vez.
          */
         [Fact]
         public async Task Handle_ShouldUpdateUser_WhenUserAlreadyExists()
         {
             // Arrange
-            var existingUser = AddOrUpdateUserCommand.Create(
-                publicId: Guid.NewGuid(),
+            var existingPublicId = Guid.NewGuid();
+
+            var command = AddOrUpdateUserCommand.Create(
+                publicId: existingPublicId,
                 fullName: FullName.Create(_fullName),
                 email: EmailAddress.Create(_email),
                 nickName: NickName.Create(_nickName),
@@ -114,15 +120,27 @@ namespace FCG.Users.Test.Application.Users.UseCases.Commands
                 role: EUserRole.Admin
             );
 
-
             _hashHelperMock.Setup(h => h.GenerateHash(It.IsAny<RawPassword>()))
                            .Returns((Hash: "hashed", Salt: "salt"));
 
-            _userRepositoryMock.Setup(r => r.UserExistsAsync(existingUser.PublicId, It.IsAny<CancellationToken>()))
+            _userRepositoryMock.Setup(r => r.UserExistsAsync(existingPublicId, It.IsAny<CancellationToken>()))
                                .ReturnsAsync(true);
 
+            var existingUserEntity = User.Create(
+                FullName.Create(_fullName),
+                EmailAddress.Create(_email),
+                NickName.Create(_nickName),
+                passwordHash: "hashed_old",
+                passwordSalt: "salt_old",
+                role: EUserRole.User
+            );
+
+            _userRepositoryMock
+                .Setup(r => r.GetByIdAsync(existingPublicId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(existingUserEntity);
+
             // Act
-            var result = await _handler.Handle(existingUser, CancellationToken.None);
+            var result = await _handler.Handle(command, CancellationToken.None);
 
             // Assert
             result.Should().NotBeNull();
@@ -131,6 +149,5 @@ namespace FCG.Users.Test.Application.Users.UseCases.Commands
             _userRepositoryMock.Verify(r => r.Update(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Once);
             _userRepositoryMock.Verify(r => r.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
         }
-
     }
 }
