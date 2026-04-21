@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: usersapi-service
+  namespace: fcg
+spec:
+  type: LoadBalancer
+  selector:
+    app: usersapi
+  ports:
+    - port: 80
+      targetPort: 8080
