@@ -13,7 +13,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: usersapi-migration
-          image: daiana2026dev/users-api-image:migrations
+          image: daiana2026dev/user-api-image:migrations
           imagePullPolicy: Always
           envFrom:
             - configMapRef:
